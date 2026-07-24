@@ -490,6 +490,23 @@ html.wa-light .ir-orbs {
   padding: 14px;
   overflow: auto;
   border-left: 1px solid var(--ir-line);
+}
+
+.app-aside__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.app-aside__head .home__heading {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.app-aside__close {
+  flex: 0 0 auto;
+}
   background: var(--ir-glass);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);

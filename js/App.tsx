@@ -17,6 +17,7 @@ import { parseTranscriptInput } from "./shared/transcript.ts";
 import { gravatarUrl } from "./shared/gravatar.ts";
 import { spaceArtFor } from "./shared/space-art.ts";
 import { readStateFromUrl, writeStateToUrl, onUrlChange, type SpaState } from "./shared/spa-nav.ts";
+import { portalLogin, usernameFromClaims, PortalLoginError } from "./shared/auth-portal.ts";
 
 type MainView = "home" | "chat" | "chunks" | "questions";
 
@@ -102,7 +103,7 @@ const [authUser, setAuthUser] = useState<string | null>(() => getStoredUser());
 const [authRole, setAuthRole] = useState<"admin" | "public">("public");
 const [userMenuOpen, setUserMenuOpen] = useState(false);
 const [loginOpen, setLoginOpen] = useState(false);
-const [loginUser, setLoginUser] = useState("jagudeloe");
+const [loginEmail, setLoginEmail] = useState("jagudeloe@contapyme.com");
   const [statsBySpace, setStatsBySpace] = useState<Record<string, SpaceStats>>({});
   const [resourceMatch, setResourceMatch] = useState<ResourceMatch[] | null>(null);
   const [matching, setMatching] = useState(false);
@@ -449,17 +450,25 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
     setBusy(true);
     setError(null);
     try {
-      const res = await api.login(loginUser.trim(), loginPass);
-      setSession(res.token, res.username);
+      // Login ContaPyme via ISS (DataSnap). NO worker.
+      const res = await portalLogin({ semail: loginEmail.trim(), password: loginPass });
+      const user = usernameFromClaims(res.claims);
+      setSession(res.token, user);
       setAuthed(true);
-      setAuthUser(res.username);
-      setAuthRole(res.role === "admin" ? "admin" : "public");
+      setAuthUser(user);
+      // Roles no vienen en el JWT; el worker los deriva de BD/seg_accionesxrol.
+      // Mientras tanto asumimos admin solo si es jagudeloe.
+      setAuthRole(user.toLowerCase() === "jagudeloe" ? "admin" : "public");
       setLoginOpen(false);
       setLoginPass("");
       await refreshSpaces();
       await refreshAllStats();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (e instanceof PortalLoginError) {
+        setError(`Login ContaPyme: ${e.message}${e.code ? ` (${e.code})` : ""}`);
+      } else {
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
       setBusy(false);
     }
@@ -1361,10 +1370,21 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
               aria-hidden={!asideOpen}
             >
               <div className="app-aside__inner">
-                <h3 className="home__heading">
-                  <iconify-icon icon="mdi:auto-fix" width="20" height="20" />
-                  Crear recurso
-                </h3>
+                <header className="app-aside__head">
+                  <h3 className="home__heading">
+                    <iconify-icon icon="mdi:auto-fix" width="20" height="20" />
+                    Crear recurso
+                  </h3>
+                  <button
+                    type="button"
+                    className="icon-btn app-aside__close"
+                    onClick={() => setAsideOpen(false)}
+                    aria-label="Cerrar panel derecho"
+                    title="Cerrar panel derecho"
+                  >
+                    <iconify-icon icon="mdi:close" width="16" height="16" />
+                  </button>
+                </header>
                 <p className="home__aside-hint">
                   Recurso activo: <strong>{active?.name || "(ninguno)"}</strong>
                 </p>
@@ -1407,14 +1427,16 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
             aria-labelledby="login-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 id="login-title">Login</h3>
-            <p className="modal-hint">Provisional · JWT</p>
+            <h3 id="login-title">Login ContaPyme</h3>
+            <p className="modal-hint">Credenciales DataSnap (dsclientes) via ISS</p>
             <label className="modal-field">
-              <span>Usuario</span>
+              <span>Email</span>
               <input
                 className="field"
-                value={loginUser}
-                onChange={(e) => setLoginUser(e.target.value)}
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="jagudeloe@contapyme.com"
                 autoComplete="username"
                 autoFocus
               />
