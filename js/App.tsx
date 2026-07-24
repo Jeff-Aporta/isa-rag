@@ -14,6 +14,7 @@ import type {
 } from "../shared/types.ts";
 import { isSupportedFilename, newId, suggestionsForSpaceName } from "../shared/index.ts";
 import { parseTranscriptInput } from "./shared/transcript.ts";
+import { gravatarUrl } from "./shared/gravatar.ts";
 
 type MainView = "home" | "chat" | "chunks" | "questions";
 
@@ -94,6 +95,7 @@ export function App() {
   const [authed, setAuthed] = useState(() => !!getToken());
 const [authUser, setAuthUser] = useState<string | null>(() => getStoredUser());
 const [authRole, setAuthRole] = useState<"admin" | "public">("public");
+const [userMenuOpen, setUserMenuOpen] = useState(false);
 const [loginOpen, setLoginOpen] = useState(false);
 const [loginUser, setLoginUser] = useState("jagudeloe");
   const [statsBySpace, setStatsBySpace] = useState<Record<string, SpaceStats>>({});
@@ -638,15 +640,94 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
               </button>
             )}
             {authed ? (
-              <>
-                <span className="auth-bar__user" title={authUser || ""}>
-                  <iconify-icon icon="mdi:account-circle" width="16" height="16" />
-                  {authUser}
-                </span>
-                <button type="button" className="btn-text" title="Cerrar sesión" onClick={doLogout}>
-                  <iconify-icon icon="mdi:logout" width="18" height="18" />
+              <div className="user-menu">
+                <button
+                  type="button"
+                  className="auth-bar__user user-menu__trigger"
+                  title={authUser || ""}
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                >
+                  <img
+                    className="auth-bar__avatar"
+                    src={gravatarUrl(authUser || "", 40)}
+                    srcSet={`${gravatarUrl(authUser || "", 40)} 1x, ${gravatarUrl(authUser || "", 80)} 2x`}
+                    alt=""
+                    width="20"
+                    height="20"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback a icono si Gravatar no responde
+                      const img = e.currentTarget;
+                      img.style.display = "none";
+                      img.nextElementSibling && ((img.nextElementSibling as HTMLElement).style.removeProperty("display"));
+                    }}
+                  />
+                  <iconify-icon
+                    className="auth-bar__avatar-fallback"
+                    icon="mdi:account-circle"
+                    width="18"
+                    height="18"
+                    style={{ display: "none" }}
+                  />
+                  <span>{authUser}</span>
+                  <iconify-icon
+                    className="user-menu__caret"
+                    icon={userMenuOpen ? "mdi:chevron-up" : "mdi:chevron-down"}
+                    width="14"
+                    height="14"
+                  />
                 </button>
-              </>
+                {userMenuOpen && (
+                  <>
+                    <div
+                      className="user-menu__backdrop"
+                      role="presentation"
+                      onClick={() => setUserMenuOpen(false)}
+                    />
+                    <div className="user-menu__popover glass-panel" role="menu" aria-label="Menú de usuario">
+                      <div className="user-menu__head">
+                        <img
+                          src={gravatarUrl(authUser || "", 64)}
+                          srcSet={`${gravatarUrl(authUser || "", 64)} 1x, ${gravatarUrl(authUser || "", 128)} 2x`}
+                          alt=""
+                          width="40"
+                          height="40"
+                          loading="lazy"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            img.style.display = "none";
+                          }}
+                        />
+                        <div>
+                          <p className="user-menu__name">{authUser}</p>
+                          <p className="user-menu__role" title={authRole === "admin" ? "Permisos de administración" : "Permisos de solo consulta"}>
+                            <iconify-icon
+                              icon={authRole === "admin" ? "mdi:shield-key-outline" : "mdi:eye-outline"}
+                              width="12"
+                              height="12"
+                            />{" "}
+                            {authRole === "admin" ? "admin" : "lectura"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="user-menu__item"
+                        role="menuitem"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          doLogout();
+                        }}
+                      >
+                        <iconify-icon icon="mdi:logout" width="16" height="16" />
+                        <span>Cerrar sesión</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             ) : (
               <button type="button" className="btn ghost small" onClick={() => setLoginOpen(true)}>
                 <iconify-icon icon="mdi:login" width="14" height="14" /> Login
