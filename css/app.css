@@ -1773,33 +1773,7 @@ html.wa-light .composer {
   white-space: nowrap;
 }
 
-/* role badge en header — admin/lectura */
-.role-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  border: 1px solid var(--ir-line);
-  background: var(--ir-glass);
-  color: var(--ir-muted);
-  white-space: nowrap;
-}
-.role-badge--admin {
-  border-color: color-mix(in srgb, var(--neon-cyan) 45%, transparent);
-  color: var(--neon-cyan);
-  background: color-mix(in srgb, var(--neon-cyan) 10%, transparent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--neon-cyan) 25%, transparent);
-}
-.role-badge--public {
-  border-color: color-mix(in srgb, var(--neon-magenta) 35%, transparent);
-  color: var(--neon-magenta);
-  background: color-mix(in srgb, var(--neon-magenta) 8%, transparent);
-}
+/* role badge en header (eliminado) */
 
 /* home__readonly-hint en topbar cuando hay sesion pero no es admin */
 .home__readonly-hint {

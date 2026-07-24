@@ -643,17 +643,6 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                   <iconify-icon icon="mdi:account-circle" width="16" height="16" />
                   {authUser}
                 </span>
-                {authRole === "admin" ? (
-                  <span className="role-badge role-badge--admin" title="Permisos de administracion: puede agregar / indexar archivos">
-                    <iconify-icon icon="mdi:shield-key-outline" width="13" height="13" />
-                    admin
-                  </span>
-                ) : (
-                  <span className="role-badge role-badge--public" title="Permisos de solo consulta">
-                    <iconify-icon icon="mdi:eye-outline" width="13" height="13" />
-                    lectura
-                  </span>
-                )}
                 <button type="button" className="btn-text" title="Cerrar sesión" onClick={doLogout}>
                   <iconify-icon icon="mdi:logout" width="18" height="18" />
                 </button>
