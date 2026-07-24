@@ -182,4 +182,36 @@ export const api = {
     ),
   questionsByFile: (spaceId: string) =>
     req<QuestionsByFile>(`/api/spaces/${encodeURIComponent(spaceId)}/questions`),
+
+  listYoutubeVideos: (spaceId: string) =>
+    req<{ videos: YoutubeVideo[] }>(`/api/spaces/${encodeURIComponent(spaceId)}/youtube`),
+  youtubeFromUrl: (spaceId: string, url: string) =>
+    req<YoutubeFromUrlResponse>(
+      `/api/spaces/${encodeURIComponent(spaceId)}/youtube/from-url`,
+      { method: "POST", body: JSON.stringify({ url }) },
+    ),
+  addYoutubeTranscript: (
+    spaceId: string,
+    youtubeVideoId: string,
+    body: {
+      title?: string;
+      channel?: string;
+      url?: string;
+      lang?: string;
+      durationSeconds?: number;
+      subtituloJson: unknown;
+    },
+  ) =>
+    req<{ videoId: string; referenceId: string; chunks: number; status: string; transcriptSource: string }>(
+      `/api/spaces/${encodeURIComponent(spaceId)}/youtube`,
+      {
+        method: "POST",
+        body: JSON.stringify({ youtubeVideoId, transcriptSource: "manual", ...body }),
+      },
+    ),
+  deleteYoutubeVideo: (spaceId: string, videoId: string) =>
+    req<{ ok: boolean }>(
+      `/api/spaces/${encodeURIComponent(spaceId)}/youtube/${encodeURIComponent(videoId)}`,
+      { method: "DELETE" },
+    ),
 };

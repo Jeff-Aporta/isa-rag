@@ -107,6 +107,9 @@ export interface SpaceStats {
   topUsers: SpaceStatsTopUser[];
   lastEvent: SpaceStatsLastEvent | null;
   windowDays: number | null;
+  documentCount: number;
+  videoCount: number;
+  videoWithTranscript: number;
 }
 
 export interface SpaceStatsUserRow {
@@ -243,7 +246,29 @@ export interface YoutubeVideo {
   status: "pending" | "indexed" | "error";
   error_message: string | null;
   chunks_count: number;
+  has_transcript: boolean;
+  transcript_source: "scraped" | "manual" | "imported" | null;
   created_at: string;
+}
+
+export interface YoutubeFromUrlMeta {
+  videoId: string;
+  title: string;
+  channel: string;
+  durationSeconds: number | null;
+  url: string;
+  lang?: string;
+}
+
+export interface YoutubeFromUrlResponse {
+  videoId: string;
+  referenceId: string;
+  hasTranscript: boolean;
+  chunks?: number;
+  status?: string;
+  transcriptSource?: "scraped" | "manual" | "imported";
+  error?: string;
+  meta?: YoutubeFromUrlMeta;
 }
 
 export interface YoutubeIngestRequest {

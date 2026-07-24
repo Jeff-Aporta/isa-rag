@@ -10,8 +10,10 @@ import type {
   SourceFragment,
   Space,
   SpaceStats,
+  YoutubeVideo,
 } from "../shared/types.ts";
 import { isSupportedFilename, newId, suggestionsForSpaceName } from "../shared/index.ts";
+import { parseTranscriptInput } from "./shared/transcript.ts";
 
 type MainView = "home" | "chat" | "chunks" | "questions";
 
@@ -101,6 +103,17 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
   // — questions-by-file view —
   const [questionsByFile, setQuestionsByFile] = useState<QuestionsByFile | null>(null);
   const [questionsBusy, setQuestionsBusy] = useState(false);
+  // — modal Archivos (estilo NotebookLM) —
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [filesTab, setFilesTab] = useState<"files" | "upload" | "youtube">("files");
+  const [youtubeVideos, setYoutubeVideos] = useState<YoutubeVideo[]>([]);
+  const [youtubeBusy, setYoutubeBusy] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+  const [youtubeWarn, setYoutubeWarn] = useState<Record<string, string>>({});
+  const [transcriptFor, setTranscriptFor] = useState<YoutubeVideo | null>(null);
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcriptBusy, setTranscriptBusy] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
 
   // —— Layout: panel lateral único (Recursos), ancho persistente ——
@@ -231,6 +244,80 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
     setResourceMatch(null);
     setAsideOpen(true);
   }, []);
+
+  // — Modal Archivos —
+  const openFilesModal = useCallback(async () => {
+    if (!spaceId) return;
+    setFilesOpen(true);
+    setFilesTab("files");
+    setYoutubeError(null);
+    setTranscriptFor(null);
+    setTranscriptText("");
+    if (canEdit) {
+      try {
+        const { videos } = await api.listYoutubeVideos(spaceId);
+        setYoutubeVideos(videos);
+      } catch (e) {
+        setYoutubeError(e instanceof Error ? e.message : String(e));
+      }
+    }
+  }, [spaceId, canEdit]);
+
+  const addYoutubeUrl = useCallback(async () => {
+    if (!spaceId || !youtubeUrl.trim()) return;
+    setYoutubeBusy(true);
+    setYoutubeError(null);
+    try {
+      const res = await api.youtubeFromUrl(spaceId, youtubeUrl.trim());
+      setYoutubeUrl("");
+      const { videos } = await api.listYoutubeVideos(spaceId);
+      setYoutubeVideos(videos);
+      if (!res.hasTranscript && res.error) {
+        setYoutubeWarn((prev) => ({ ...prev, [res.videoId]: res.error || "sin transcript" }));
+      }
+    } catch (e) {
+      setYoutubeError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setYoutubeBusy(false);
+    }
+  }, [spaceId, youtubeUrl]);
+
+  const assignManualTranscript = useCallback(async () => {
+    if (!spaceId || !transcriptFor || !transcriptText.trim()) return;
+    setTranscriptBusy(true);
+    try {
+      // Parsear SRT o texto plano a subtitle doc.
+      const { segments, lang } = parseTranscriptInput(transcriptText);
+      await api.addYoutubeTranscript(spaceId, transcriptFor.youtube_video_id, {
+        title: transcriptFor.title || transcriptFor.youtube_video_id,
+        channel: transcriptFor.channel || undefined,
+        url: transcriptFor.url || undefined,
+        lang: transcriptFor.lang || lang,
+        durationSeconds: transcriptFor.duration_seconds || undefined,
+        subtituloJson: { videoId: transcriptFor.youtube_video_id, lang, segments },
+      });
+      setTranscriptFor(null);
+      setTranscriptText("");
+      const { videos } = await api.listYoutubeVideos(spaceId);
+      setYoutubeVideos(videos);
+    } catch (e) {
+      setYoutubeError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTranscriptBusy(false);
+    }
+  }, [spaceId, transcriptFor, transcriptText]);
+
+  const removeYoutubeVideo = useCallback(async (videoId: string) => {
+    if (!spaceId) return;
+    if (!confirm("¿Eliminar este video y sus chunks indexados?")) return;
+    try {
+      await api.deleteYoutubeVideo(spaceId, videoId);
+      const { videos } = await api.listYoutubeVideos(spaceId);
+      setYoutubeVideos(videos);
+    } catch (e) {
+      setYoutubeError(e instanceof Error ? e.message : String(e));
+    }
+  }, [spaceId]);
 
   function openEditSpace(s: Space) {
     setEditSpaceId(s.id);
@@ -606,7 +693,11 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                   <div className="topbar__meta" aria-label="Resumen global">
                     <span className="stat-chip" title="Documentos totales indexados">
                       <iconify-icon icon="mdi:file-document-multiple-outline" width="13" height="13" />
-                      {spaces.reduce((acc, s) => acc + (s.docCount ?? 0), 0)} docs
+                      {Object.values(statsBySpace).reduce((acc, st) => acc + (st.documentCount ?? 0), 0)} docs
+                    </span>
+                    <span className="stat-chip" title="Videos con transcript">
+                      <iconify-icon icon="mdi:youtube" width="13" height="13" />
+                      {Object.values(statsBySpace).reduce((acc, st) => acc + (st.videoWithTranscript ?? 0), 0)} videos
                     </span>
                     <span className="stat-chip" title="Espacios con actividad">
                       <iconify-icon icon="mdi:pulse" width="13" height="13" />
@@ -686,7 +777,12 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                             </p>
                           </div>
                           <div className="space-card__meta">
-                            <span className="pill">{s.docCount ?? 0} docs</span>
+                            <span className="pill" title="Documentos">
+                              <iconify-icon icon="mdi:file-document-outline" width="12" height="12" /> {st?.documentCount ?? s.docCount ?? 0}
+                            </span>
+                            <span className="pill" title="Videos (con transcript / total)">
+                              <iconify-icon icon="mdi:youtube" width="12" height="12" /> {st?.videoWithTranscript ?? 0}/{st?.videoCount ?? 0}
+                            </span>
                             <span className="pill pill--ghost">abrir →</span>
                           </div>
                           <div className="space-card__stats" aria-label="Estadísticas del espacio">
@@ -822,6 +918,17 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                     <button type="button" className="btn-text" onClick={backToChat} title="Volver al chat">
                       <iconify-icon icon="mdi:chat-outline" width="18" height="18" />
                       <span>Volver al chat</span>
+                    </button>
+                  )}
+                  {mainView !== "chunks" && active && (
+                    <button
+                      type="button"
+                      className="btn-text"
+                      onClick={openFilesModal}
+                      title="Abrir archivos (docs + YouTube)"
+                    >
+                      <iconify-icon icon="mdi:folder-multiple-outline" width="18" height="18" />
+                      <span>Archivos</span>
                     </button>
                   )}
                   {mainView === "chat" && (
@@ -969,100 +1076,13 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                 </div>
               ) : (
                 <>
-                  <section className="docs-panel" aria-label="Documentos del espacio">
-                    <div className="docs-panel__head">
-                      <p className="section-title">Documentos</p>
-                      <span className="docs-panel__count">
-                        {indexed}/{docs.length} indexados
-                      </span>
-                      {!canEdit && authed && (
-                        <span className="pill pill--ghost" title="Solo administradores pueden subir archivos">
-                          <iconify-icon icon="mdi:lock-outline" width="12" height="12" /> solo admin
-                        </span>
-                      )}
-                    </div>
-                    {canEdit ? (
-                    <label
-                      className="file-drop"
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.add("drag");
-                      }}
-                      onDragLeave={(e) => e.currentTarget.classList.remove("drag")}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.classList.remove("drag");
-                        onFiles(e.dataTransfer.files);
-                      }}
-                    >
-                      <input
-                        className="ir-file-input"
-                        type="file"
-                        multiple
-                        accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,.docx"
-                        onChange={(e) => {
-                          onFiles(e.target.files);
-                          e.target.value = "";
-                        }}
-                      />
-                      <span className="file-drop__text">
-                        PDF · MD · TXT · DOCX · CSV · HTML
-                        <small>clic o arrastra</small>
-                      </span>
-                    </label>
-                    ) : (
-                      <div className="file-drop file-drop--readonly" aria-disabled="true">
-                        <iconify-icon icon="mdi:lock-outline" width="22" height="22" />
-                        <span className="file-drop__text">
-                          Subida deshabilitada
-                          <small>solo administradores pueden agregar archivos</small>
-                        </span>
-                      </div>
-                    )}
-                    <ul className="doc-list">
-                      {docs.map((d) => (
-                        <li
-                          key={d.id}
-                          className={selectedDocId === d.id ? "active" : undefined}
-                          onClick={() => openChunks(d)}
-                          title="Ver chunks indexados"
-                        >
-                          <span>{d.filename}</span>
-                          <span>{d.status}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      className="btn block"
-                      onClick={indexDocs}
-                      disabled={!spaceId || !docs.length || indexing || !canEdit}
-                      title={canEdit ? "Indexar / reindexar" : "Solo administradores pueden indexar"}
-                    >
-                      {indexing ? (
-                        <>
-                          <iconify-icon icon="svg-spinners:ring-resize" width="14" height="14" /> Indexando…
-                        </>
-                      ) : indexed ? (
-                        <>
-                          <iconify-icon icon="mdi:check" width="14" height="14" /> Reindexar
-                        </>
-                      ) : (
-                        <>
-                          <iconify-icon icon="mdi:database-import" width="14" height="14" /> Indexar
-                        </>
-                      )}
-                    </button>
-                    {error && <p className="err docs-panel__error">{error}</p>}
-                  </section>
-
                   <div className="chat" ref={chatRef}>
                     {!messages.length && (
                       <div className="empty">
                         <iconify-icon icon="mdi:chat-question-outline" width="32" height="32" />
                         <p>
                           {spaceId
-                            ? "Sube docs, indexa y pregunta. Clic en un archivo para ver chunks."
+                            ? "Pregunta sobre tus docs y videos. Usa el botón Archivos para gestionar fuentes."
                             : "Crea o elige un espacio."}
                         </p>
                       </div>
@@ -1303,6 +1323,317 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                 Guardar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {filesOpen && spaceId && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setFilesOpen(false)}>
+          <div
+            className="modal glass-panel modal--files"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Archivos del espacio"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-head">
+              <div>
+                <h2 className="modal-title">Archivos</h2>
+                <p className="modal-hint">
+                  Documentos y videos que entrenan este espacio.
+                  {docs.length || youtubeVideos.length
+                    ? ` ${docs.length} docs · ${youtubeVideos.length} videos`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={() => setFilesOpen(false)}
+                aria-label="Cerrar"
+                title="Cerrar"
+              >
+                <iconify-icon icon="mdi:close" width="16" height="16" />
+              </button>
+            </div>
+
+            <div className="tabs" role="tablist" aria-label="Acciones de archivos">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filesTab === "files"}
+                className={`tab ${filesTab === "files" ? "tab--active" : ""}`}
+                onClick={() => setFilesTab("files")}
+              >
+                <iconify-icon icon="mdi:format-list-bulleted" width="14" height="14" /> Lista
+              </button>
+              {canEdit && (
+                <>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={filesTab === "upload"}
+                    className={`tab ${filesTab === "upload" ? "tab--active" : ""}`}
+                    onClick={() => setFilesTab("upload")}
+                  >
+                    <iconify-icon icon="mdi:upload" width="14" height="14" /> Subir docs
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={filesTab === "youtube"}
+                    className={`tab ${filesTab === "youtube" ? "tab--active" : ""}`}
+                    onClick={() => setFilesTab("youtube")}
+                  >
+                    <iconify-icon icon="mdi:youtube" width="14" height="14" /> YouTube
+                  </button>
+                </>
+              )}
+            </div>
+
+            {filesTab === "files" && (
+              <div className="modal-section">
+                {!docs.length && !youtubeVideos.length && (
+                  <p className="empty">No hay archivos en este espacio todavia.</p>
+                )}
+
+                {docs.length > 0 && (
+                  <div>
+                    <p className="section-title">
+                      <iconify-icon icon="mdi:file-document-outline" width="14" height="14" /> Documentos
+                      <span className="docs-panel__count">{indexed}/{docs.length} indexados</span>
+                    </p>
+                    <ul className="file-list">
+                      {docs.map((d) => (
+                        <li key={d.id} className="file-list__item">
+                          <iconify-icon icon="mdi:file-document-outline" width="18" height="18" />
+                          <span className="file-list__name">{d.filename}</span>
+                          <span className="pill pill--ghost">{d.status}</span>
+                          <button
+                            type="button"
+                            className="btn-text small"
+                            onClick={() => openChunks(d)}
+                            title="Ver chunks indexados"
+                          >
+                            <iconify-icon icon="mdi:graph-outline" width="14" height="14" /> Chunks
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {youtubeVideos.length > 0 && (
+                  <div>
+                    <p className="section-title">
+                      <iconify-icon icon="mdi:youtube" width="14" height="14" /> Videos
+                      <span className="docs-panel__count">
+                        {youtubeVideos.filter((v) => v.has_transcript).length}/{youtubeVideos.length} con transcript
+                      </span>
+                    </p>
+                    <ul className="file-list">
+                      {youtubeVideos.map((v) => (
+                        <li key={v.id} className="file-list__item">
+                          <iconify-icon icon="mdi:youtube" width="18" height="18" />
+                          <span className="file-list__name">
+                            {v.title || v.youtube_video_id}
+                            {v.channel ? <small> · {v.channel}</small> : null}
+                          </span>
+                          {v.has_transcript ? (
+                            <span className="pill pill--ok" title={`transcript: ${v.transcript_source ?? "?"}`}>
+                              <iconify-icon icon="mdi:check" width="12" height="12" /> {v.chunks_count} chunks
+                            </span>
+                          ) : (
+                            <span className="pill pill--warn" title={v.error_message || "sin transcript"}>
+                              <iconify-icon icon="mdi:alert-outline" width="12" height="12" /> sin transcript
+                            </span>
+                          )}
+                          {v.has_transcript && v.url && (
+                            <a className="btn-text small" href={v.url} target="_blank" rel="noreferrer">
+                              <iconify-icon icon="mdi:open-in-new" width="14" height="14" />
+                            </a>
+                          )}
+                          {canEdit && !v.has_transcript && (
+                            <button
+                              type="button"
+                              className="btn-text small"
+                              onClick={() => {
+                                setTranscriptFor(v);
+                                setTranscriptText("");
+                                setYoutubeError(null);
+                              }}
+                              title="Asignar transcript manual"
+                            >
+                              <iconify-icon icon="mdi:subtitles-outline" width="14" height="14" /> Asignar
+                            </button>
+                          )}
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="btn-text small danger"
+                              onClick={() => removeYoutubeVideo(v.id)}
+                              title="Eliminar"
+                            >
+                              <iconify-icon icon="mdi:trash-can-outline" width="14" height="14" />
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {filesTab === "upload" && canEdit && (
+              <div className="modal-section">
+                <label
+                  className="file-drop"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add("drag");
+                  }}
+                  onDragLeave={(e) => e.currentTarget.classList.remove("drag")}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove("drag");
+                    onFiles(e.dataTransfer.files);
+                  }}
+                >
+                  <input
+                    className="ir-file-input"
+                    type="file"
+                    multiple
+                    accept=".pdf,.txt,.md,.markdown,.csv,.html,.htm,.json,.docx"
+                    onChange={(e) => {
+                      onFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <iconify-icon icon="mdi:cloud-upload-outline" width="36" height="36" />
+                  <span className="file-drop__text">
+                    PDF · MD · TXT · DOCX · CSV · HTML
+                    <small>clic o arrastra — indexa despues con el boton Indexar</small>
+                  </span>
+                </label>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn block"
+                    onClick={indexDocs}
+                    disabled={!spaceId || !docs.length || indexing}
+                    title="Indexar / reindexar"
+                  >
+                    {indexing ? (
+                      <>
+                        <iconify-icon icon="svg-spinners:ring-resize" width="14" height="14" /> Indexando…
+                      </>
+                    ) : indexed ? (
+                      <>
+                        <iconify-icon icon="mdi:check" width="14" height="14" /> Reindexar
+                      </>
+                    ) : (
+                      <>
+                        <iconify-icon icon="mdi:database-import" width="14" height="14" /> Indexar
+                      </>
+                    )}
+                  </button>
+                </div>
+                {error && <p className="err">{error}</p>}
+              </div>
+            )}
+
+            {filesTab === "youtube" && canEdit && (
+              <div className="modal-section">
+                {transcriptFor ? (
+                  <div className="transcript-form">
+                    <p className="section-title">
+                      <iconify-icon icon="mdi:subtitles-outline" width="14" height="14" /> Asignar transcript manual
+                    </p>
+                    <p className="modal-hint">
+                      Video: <b>{transcriptFor.title || transcriptFor.youtube_video_id}</b>
+                    </p>
+                    <p className="modal-hint small">
+                      Pega SRT o JSON {"{"}segments: [...]{"}"}. Se reindexara este video.
+                    </p>
+                    <textarea
+                      className="modal-field__input transcript-textarea"
+                      rows={10}
+                      placeholder="1\n00:00:00,000 --> 00:00:04,000\nHola mundo..."
+                      value={transcriptText}
+                      onChange={(e) => setTranscriptText(e.target.value)}
+                    />
+                    {youtubeError && <p className="err">{youtubeError}</p>}
+                    <div className="modal-actions">
+                      <button type="button" className="btn ghost" onClick={() => setTranscriptFor(null)}>
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={assignManualTranscript}
+                        disabled={transcriptBusy || !transcriptText.trim()}
+                      >
+                        {transcriptBusy ? (
+                          <>
+                            <iconify-icon icon="svg-spinners:ring-resize" width="14" height="14" /> Asignando…
+                          </>
+                        ) : (
+                          <>
+                            <iconify-icon icon="mdi:check" width="14" height="14" /> Asignar y reindexar
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="section-title">
+                      <iconify-icon icon="mdi:youtube" width="14" height="14" /> Agregar video de YouTube
+                    </p>
+                    <p className="modal-hint small">
+                      Pegar URL o ID. Intentamos descargar captions oficiales de YouTube (sin Whisper).
+                      Si YouTube no responde o el video no tiene subtitulos, marcaremos el video y podras
+                      pegar el transcript manual desde la lista.
+                    </p>
+                    <div className="modal-field">
+                      <input
+                        type="text"
+                        placeholder="https://www.youtube.com/watch?v=... o solo el ID"
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void addYoutubeUrl();
+                          }
+                        }}
+                      />
+                    </div>
+                    {youtubeError && <p className="err">{youtubeError}</p>}
+                    <div className="modal-actions">
+                      <button
+                        type="button"
+                        className="btn block"
+                        onClick={addYoutubeUrl}
+                        disabled={!youtubeUrl.trim() || youtubeBusy}
+                        title="Probar a obtener transcript oficial"
+                      >
+                        {youtubeBusy ? (
+                          <>
+                            <iconify-icon icon="svg-spinners:ring-resize" width="14" height="14" /> Procesando…
+                          </>
+                        ) : (
+                          <>
+                            <iconify-icon icon="mdi:plus" width="14" height="14" /> Agregar
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
