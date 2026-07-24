@@ -1,14 +1,14 @@
 {
-  "builtAt": "2026-07-24T15:04:00.728Z",
+  "builtAt": "2026-07-24T15:18:42.915Z",
   "mode": "bundle",
   "entry": [
     "css/app.css",
     "js/main.tsx"
   ],
   "files": 2,
-  "bytesIn": 167778,
-  "bytesOut": 90574,
-  "hash": "b45e73ca993d",
+  "bytesIn": 168155,
+  "bytesOut": 90868,
+  "hash": "4fa03ad203d8",
   "outputs": [
     "_dist/css/app.css",
     "_dist/js/main.js"

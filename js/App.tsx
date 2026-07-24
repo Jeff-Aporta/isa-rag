@@ -741,7 +741,7 @@ const [loginEmail, setLoginEmail] = useState("jagudeloe@contapyme.com");
                       role="presentation"
                       onClick={() => setUserMenuOpen(false)}
                     />
-                    <div className="user-menu__popover glass-panel" role="menu" aria-label="Menú de usuario">
+                    <div className="user-menu__popover" role="menu" aria-label="Menú de usuario">
                       <div className="user-menu__head">
                         <img
                           src={gravatarUrl(authUser || "", 64)}

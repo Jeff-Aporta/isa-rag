@@ -281,7 +281,7 @@ html.wa-light .ir-orbs {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto var(--aside-w, 320px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(220px, var(--aside-w, 280px));
   transition: grid-template-columns 180ms ease;
 }
 
@@ -369,7 +369,12 @@ html.wa-light .ir-orbs {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  background: #14131c;
+  border: 1px solid var(--ir-line);
+  border-radius: 12px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
 }
 .user-menu__head {
   display: flex;
@@ -556,6 +561,12 @@ html.wa-dark .app-aside__inner {
 .brand-link .brand-text {
   font-weight: 600;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  min-width: 0;
+}
+.brand-link {
+  min-width: 0;
+  flex: 0 1 auto;
 }
 .brand-link--active .brand-mark--inline {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--neon-cyan) 45%, transparent);
@@ -1984,9 +1995,11 @@ html.wa-light .composer {
 
 .resource-btn {
   display: grid;
-  grid-template-columns: 28px 1fr 16px;
+  grid-template-columns: 28px minmax(0, 1fr) 16px;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--ir-line);
   border-radius: 10px;
@@ -2024,6 +2037,9 @@ html.wa-light .composer {
 .resource-btn__body strong {
   font-size: 13px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .resource-btn__desc {
@@ -2032,6 +2048,7 @@ html.wa-light .composer {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 /* role badge en header (eliminado) */
