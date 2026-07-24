@@ -187,6 +187,10 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
     setSelectedDocId(null);
     setChunks([]);
     setResourceMatch(null);
+    setQuestionsByFile(null);
+    setFilesOpen(false);
+    setEditOpen(false);
+    setUserMenuOpen(false);
   }, []);
 
   const suggestResources = useCallback(async () => {
@@ -599,21 +603,29 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
       <div className="app-shell">
         <header className="app-header">
           <div className="app-header__left">
-            <div className="brand-mark brand-mark--inline" aria-hidden="true">
-              <iconify-icon icon="mdi:file-search-outline" width="18" height="18" />
-            </div>
-            <span className="brand-text">ISA RAG</span>
-            <span
-              className={`brand-status${healthOk ? " brand-status--ok" : " brand-status--err"}`}
-              title={healthOk ? "API lista" : "API no disponible"}
-              aria-label={healthOk ? "API lista" : "API no disponible"}
+            <button
+              type="button"
+              className={`brand-link${mainView === "home" ? " brand-link--active" : ""}`}
+              onClick={goHome}
+              title="Inicio · vista general de espacios"
+              aria-label="Ir al inicio"
             >
-              <iconify-icon
-                icon={healthOk ? "mdi:check-circle" : "mdi:alert-circle"}
-                width="16"
-                height="16"
-              />
-            </span>
+              <span className="brand-mark brand-mark--inline" aria-hidden="true">
+                <iconify-icon icon="mdi:file-search-outline" width="18" height="18" />
+              </span>
+              <span className="brand-text">ISA RAG</span>
+              <span
+                className={`brand-status${healthOk ? " brand-status--ok" : " brand-status--err"}`}
+                title={healthOk ? "API lista" : "API no disponible"}
+                aria-label={healthOk ? "API lista" : "API no disponible"}
+              >
+                <iconify-icon
+                  icon={healthOk ? "mdi:check-circle" : "mdi:alert-circle"}
+                  width="16"
+                  height="16"
+                />
+              </span>
+            </button>
             <nav className="main-nav" aria-label="Navegación principal">
               <button
                 type="button"

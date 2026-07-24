@@ -513,6 +513,37 @@ html.wa-dark .app-aside__inner {
   min-width: 0;
 }
 
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ir-text);
+  cursor: pointer;
+  transition: background 120ms ease, transform 120ms ease;
+  font: inherit;
+}
+.brand-link:hover {
+  background: color-mix(in srgb, var(--ir-line) 50%, transparent);
+}
+.brand-link:active {
+  transform: scale(0.98);
+}
+.brand-link:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+.brand-link .brand-text {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.brand-link--active .brand-mark--inline {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--neon-cyan) 45%, transparent);
+}
+
 .brand-status {
   flex-shrink: 0;
   display: grid;
