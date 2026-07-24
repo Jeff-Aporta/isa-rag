@@ -892,50 +892,98 @@ const [loginEmail, setLoginEmail] = useState("jagudeloe@contapyme.com");
                             }
                           }}
                         >
-                          <div
-                            className={`space-card__cover space-card__cover--art ${spaceArtFor(s.name).variant}`}
-                            aria-hidden="true"
-                            data-art={spaceArtFor(s.name).label}
-                          >
-                            <iconify-icon
-                              className="art-decor art-decor--a"
-                              icon={spaceArtFor(s.name).decor[0]}
-                              width="32"
-                              height="32"
-                            />
-                            <iconify-icon
-                              className="art-decor art-decor--b"
-                              icon={spaceArtFor(s.name).decor[1]}
-                              width="22"
-                              height="22"
-                            />
-                            <iconify-icon
-                              className="art-hero"
-                              icon={spaceArtFor(s.name).hero}
-                              width="64"
-                              height="64"
-                            />
-                            <iconify-icon
-                              className="art-decor art-decor--c"
-                              icon={spaceArtFor(s.name).decor[2]}
-                              width="20"
-                              height="20"
-                            />
-                            <iconify-icon
-                              className="art-decor art-decor--d"
-                              icon={spaceArtFor(s.name).decor[3]}
-                              width="26"
-                              height="26"
-                            />
-                            <iconify-icon
-                              className="art-decor art-decor--e"
-                              icon={spaceArtFor(s.name).decor[4]}
-                              width="18"
-                              height="18"
-                            />
-                            <span className="art-glow" />
-                            <span className="art-grid" />
-                          </div>
+                          {(() => {
+                            const art = spaceArtFor(s.name);
+                            return (
+                              <div
+                                className={`space-card__cover space-card__cover--art mood-${art.mood}`}
+                                aria-hidden="true"
+                                data-art={art.label}
+                                data-mood={art.mood}
+                              >
+                                <iconify-icon
+                                  className="art-moon"
+                                  icon={art.moon}
+                                  width="120"
+                                  height="120"
+                                />
+                                <span className="art-halo" />
+                                <span className="art-rings">
+                                  <span className="art-ring art-ring--1" />
+                                  <span className="art-ring art-ring--2" />
+                                  <span className="art-ring art-ring--3" />
+                                </span>
+                                <iconify-icon
+                                  className="art-orbit art-orbit--1a"
+                                  icon={art.orbit1[0]}
+                                  width="26"
+                                  height="26"
+                                />
+                                <iconify-icon
+                                  className="art-orbit art-orbit--1b"
+                                  icon={art.orbit1[1]}
+                                  width="28"
+                                  height="28"
+                                />
+                                <iconify-icon
+                                  className="art-orbit art-orbit--1c"
+                                  icon={art.orbit1[2]}
+                                  width="24"
+                                  height="24"
+                                />
+                                <iconify-icon
+                                  className="art-orbit art-orbit--2a"
+                                  icon={art.orbit2[0]}
+                                  width="16"
+                                  height="16"
+                                />
+                                <iconify-icon
+                                  className="art-orbit art-orbit--2b"
+                                  icon={art.orbit2[1]}
+                                  width="18"
+                                  height="18"
+                                />
+                                <iconify-icon
+                                  className="art-orbit art-orbit--2c"
+                                  icon={art.orbit2[2]}
+                                  width="16"
+                                  height="16"
+                                />
+                                <iconify-icon
+                                  className="art-accent"
+                                  icon={art.accent}
+                                  width="32"
+                                  height="32"
+                                />
+                                <iconify-icon
+                                  className="art-spark art-spark--a"
+                                  icon={art.sparkles[0]}
+                                  width="10"
+                                  height="10"
+                                />
+                                <iconify-icon
+                                  className="art-spark art-spark--b"
+                                  icon={art.sparkles[1]}
+                                  width="8"
+                                  height="8"
+                                />
+                                <iconify-icon
+                                  className="art-spark art-spark--c"
+                                  icon={art.sparkles[2]}
+                                  width="10"
+                                  height="10"
+                                />
+                                <iconify-icon
+                                  className="art-spark art-spark--d"
+                                  icon={art.sparkles[3]}
+                                  width="8"
+                                  height="8"
+                                />
+                                <span className="art-grid" />
+                                <span className="art-noise" />
+                              </div>
+                            );
+                          })()}
                           <div className="space-card__body">
                             <h4>{s.name}</h4>
                             <p className="space-card__desc">
