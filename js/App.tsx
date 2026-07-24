@@ -16,6 +16,7 @@ import { isSupportedFilename, newId, suggestionsForSpaceName } from "../shared/i
 import { parseTranscriptInput } from "./shared/transcript.ts";
 import { gravatarUrl } from "./shared/gravatar.ts";
 import { spaceArtFor } from "./shared/space-art.ts";
+import { readStateFromUrl, writeStateToUrl, onUrlChange, type SpaState } from "./shared/spa-nav.ts";
 
 type MainView = "home" | "chat" | "chunks" | "questions";
 
@@ -85,7 +86,10 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [healthOk, setHealthOk] = useState(false);
   const [newSpaceName, setNewSpaceName] = useState("");
-  const [mainView, setMainView] = useState<MainView>("home");
+  const [mainView, setMainView] = useState<MainView>(() => {
+    const fromUrl = readStateFromUrl();
+    return fromUrl?.v ?? "home";
+  });
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [chunks, setChunks] = useState<RagChunk[]>([]);
   const [chunksBusy, setChunksBusy] = useState(false);
@@ -129,6 +133,12 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
   useEffect(() => {
     localStorage.setItem("isa-rag:layout:asideOpen", asideOpen ? "1" : "0");
   }, [asideOpen]);
+
+  // — bootstrap: restaura spaceId desde ?s= al arrancar —
+  useEffect(() => {
+    const fromUrl = readStateFromUrl();
+    if (fromUrl?.sid) setSpaceId(fromUrl.sid);
+  }, []);
 
   const active = spaces.find((s) => s.id === spaceId) || null;
   const selectedDoc = docs.find((d) => d.id === selectedDocId) || null;
@@ -490,6 +500,29 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
   useEffect(() => {
     chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  // — sincroniza estado SPA → ?s=<b64url> —
+  useEffect(() => {
+    const next: SpaState =
+      mainView === "home"
+        ? { v: "home" }
+        : spaceId
+          ? { v: mainView, sid: spaceId }
+          : { v: "home" };
+    writeStateToUrl(next);
+  }, [mainView, spaceId]);
+
+  // — sincroniza url → estado cuando el usuario usa back/forward —
+  useEffect(() => {
+    return onUrlChange((st) => {
+      if (!st) {
+        setMainView("home");
+        return;
+      }
+      setMainView(st.v);
+      if (st.sid) setSpaceId(st.sid);
+    });
+  }, []);
 
   async function createSpace() {
     const name = newSpaceName.trim() || "Espacio sin nombre";
