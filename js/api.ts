@@ -15,6 +15,8 @@ import type {
   SpaceStats,
   SpaceStatsUsersResponse,
   UpdateSpaceRequest,
+  YoutubeFromUrlResponse,
+  YoutubeVideo,
 } from "../shared/types.ts";
 
 const TOKEN_KEY = "isa-rag:token";

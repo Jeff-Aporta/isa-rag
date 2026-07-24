@@ -253,7 +253,7 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
     setYoutubeError(null);
     setTranscriptFor(null);
     setTranscriptText("");
-    if (canEdit) {
+    if (authRole === "admin") {
       try {
         const { videos } = await api.listYoutubeVideos(spaceId);
         setYoutubeVideos(videos);
@@ -261,7 +261,7 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
         setYoutubeError(e instanceof Error ? e.message : String(e));
       }
     }
-  }, [spaceId, canEdit]);
+  }, [spaceId, authRole]);
 
   const addYoutubeUrl = useCallback(async () => {
     if (!spaceId || !youtubeUrl.trim()) return;
