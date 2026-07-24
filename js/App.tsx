@@ -15,6 +15,7 @@ import type {
 import { isSupportedFilename, newId, suggestionsForSpaceName } from "../shared/index.ts";
 import { parseTranscriptInput } from "./shared/transcript.ts";
 import { gravatarUrl } from "./shared/gravatar.ts";
+import { spaceArtFor } from "./shared/space-art.ts";
 
 type MainView = "home" | "chat" | "chunks" | "questions";
 
@@ -849,8 +850,49 @@ const [loginUser, setLoginUser] = useState("jagudeloe");
                             }
                           }}
                         >
-                          <div className="space-card__cover" aria-hidden="true">
-                            <iconify-icon icon="mdi:file-search-outline" width="28" height="28" />
+                          <div
+                            className={`space-card__cover space-card__cover--art ${spaceArtFor(s.name).variant}`}
+                            aria-hidden="true"
+                            data-art={spaceArtFor(s.name).label}
+                          >
+                            <iconify-icon
+                              className="art-decor art-decor--a"
+                              icon={spaceArtFor(s.name).decor[0]}
+                              width="32"
+                              height="32"
+                            />
+                            <iconify-icon
+                              className="art-decor art-decor--b"
+                              icon={spaceArtFor(s.name).decor[1]}
+                              width="22"
+                              height="22"
+                            />
+                            <iconify-icon
+                              className="art-hero"
+                              icon={spaceArtFor(s.name).hero}
+                              width="64"
+                              height="64"
+                            />
+                            <iconify-icon
+                              className="art-decor art-decor--c"
+                              icon={spaceArtFor(s.name).decor[2]}
+                              width="20"
+                              height="20"
+                            />
+                            <iconify-icon
+                              className="art-decor art-decor--d"
+                              icon={spaceArtFor(s.name).decor[3]}
+                              width="26"
+                              height="26"
+                            />
+                            <iconify-icon
+                              className="art-decor art-decor--e"
+                              icon={spaceArtFor(s.name).decor[4]}
+                              width="18"
+                              height="18"
+                            />
+                            <span className="art-glow" />
+                            <span className="art-grid" />
                           </div>
                           <div className="space-card__body">
                             <h4>{s.name}</h4>
