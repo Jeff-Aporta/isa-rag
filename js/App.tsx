@@ -894,6 +894,11 @@ const [loginEmail, setLoginEmail] = useState("jagudeloe@contapyme.com");
                         >
                           {(() => {
                             const art = spaceArtFor(s.name);
+                            // iconify-icon es web component: React pone className como
+                            // atributo "class" en el DOM pero el upgrade del custom
+                            // element a veces lo renombra a "classname" (no estandar CSS).
+                            // Por eso envolvemos cada icono en un <span class="...">
+                            // para que el styling CSS funcione siempre.
                             return (
                               <div
                                 className={`space-card__cover space-card__cover--art mood-${art.mood}`}
@@ -901,84 +906,48 @@ const [loginEmail, setLoginEmail] = useState("jagudeloe@contapyme.com");
                                 data-art={art.label}
                                 data-mood={art.mood}
                               >
-                                <iconify-icon
-                                  className="art-moon"
-                                  icon={art.moon}
-                                  width="120"
-                                  height="120"
-                                />
+                                <span className="art-moon">
+                                  <iconify-icon icon={art.moon} width="120" height="120" />
+                                </span>
                                 <span className="art-halo" />
                                 <span className="art-rings">
                                   <span className="art-ring art-ring--1" />
                                   <span className="art-ring art-ring--2" />
                                   <span className="art-ring art-ring--3" />
                                 </span>
-                                <iconify-icon
-                                  className="art-orbit art-orbit--1a"
-                                  icon={art.orbit1[0]}
-                                  width="26"
-                                  height="26"
-                                />
-                                <iconify-icon
-                                  className="art-orbit art-orbit--1b"
-                                  icon={art.orbit1[1]}
-                                  width="28"
-                                  height="28"
-                                />
-                                <iconify-icon
-                                  className="art-orbit art-orbit--1c"
-                                  icon={art.orbit1[2]}
-                                  width="24"
-                                  height="24"
-                                />
-                                <iconify-icon
-                                  className="art-orbit art-orbit--2a"
-                                  icon={art.orbit2[0]}
-                                  width="16"
-                                  height="16"
-                                />
-                                <iconify-icon
-                                  className="art-orbit art-orbit--2b"
-                                  icon={art.orbit2[1]}
-                                  width="18"
-                                  height="18"
-                                />
-                                <iconify-icon
-                                  className="art-orbit art-orbit--2c"
-                                  icon={art.orbit2[2]}
-                                  width="16"
-                                  height="16"
-                                />
-                                <iconify-icon
-                                  className="art-accent"
-                                  icon={art.accent}
-                                  width="32"
-                                  height="32"
-                                />
-                                <iconify-icon
-                                  className="art-spark art-spark--a"
-                                  icon={art.sparkles[0]}
-                                  width="10"
-                                  height="10"
-                                />
-                                <iconify-icon
-                                  className="art-spark art-spark--b"
-                                  icon={art.sparkles[1]}
-                                  width="8"
-                                  height="8"
-                                />
-                                <iconify-icon
-                                  className="art-spark art-spark--c"
-                                  icon={art.sparkles[2]}
-                                  width="10"
-                                  height="10"
-                                />
-                                <iconify-icon
-                                  className="art-spark art-spark--d"
-                                  icon={art.sparkles[3]}
-                                  width="8"
-                                  height="8"
-                                />
+                                <span className="art-orbit art-orbit--1a">
+                                  <iconify-icon icon={art.orbit1[0]} width="26" height="26" />
+                                </span>
+                                <span className="art-orbit art-orbit--1b">
+                                  <iconify-icon icon={art.orbit1[1]} width="28" height="28" />
+                                </span>
+                                <span className="art-orbit art-orbit--1c">
+                                  <iconify-icon icon={art.orbit1[2]} width="24" height="24" />
+                                </span>
+                                <span className="art-orbit art-orbit--2a">
+                                  <iconify-icon icon={art.orbit2[0]} width="16" height="16" />
+                                </span>
+                                <span className="art-orbit art-orbit--2b">
+                                  <iconify-icon icon={art.orbit2[1]} width="18" height="18" />
+                                </span>
+                                <span className="art-orbit art-orbit--2c">
+                                  <iconify-icon icon={art.orbit2[2]} width="16" height="16" />
+                                </span>
+                                <span className="art-accent">
+                                  <iconify-icon icon={art.accent} width="32" height="32" />
+                                </span>
+                                <span className="art-spark art-spark--a">
+                                  <iconify-icon icon={art.sparkles[0]} width="10" height="10" />
+                                </span>
+                                <span className="art-spark art-spark--b">
+                                  <iconify-icon icon={art.sparkles[1]} width="8" height="8" />
+                                </span>
+                                <span className="art-spark art-spark--c">
+                                  <iconify-icon icon={art.sparkles[2]} width="10" height="10" />
+                                </span>
+                                <span className="art-spark art-spark--d">
+                                  <iconify-icon icon={art.sparkles[3]} width="8" height="8" />
+                                </span>
                                 <span className="art-grid" />
                                 <span className="art-noise" />
                               </div>
