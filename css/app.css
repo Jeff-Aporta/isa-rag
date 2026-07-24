@@ -1636,6 +1636,7 @@ html.wa-light .composer {
 }
 
 .space-card {
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   gap: 10px;
