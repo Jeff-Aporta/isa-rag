@@ -659,22 +659,22 @@ html.wa-light .section-title {
   padding: 0;
   border-radius: 7px;
   border: 1px solid transparent;
-  background: color-mix(in srgb, var(--neon-cyan) 10%, transparent);
-  color: var(--ir-text);
+  background: transparent;
+  color: var(--ir-muted);
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
 .icon-btn:hover {
-  border-color: var(--ir-line-hi);
-  background: color-mix(in srgb, var(--neon-cyan) 22%, transparent);
-  box-shadow: var(--ir-glow-sm);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--ir-line) 50%, transparent);
+  color: var(--neon-cyan);
 }
 
 .icon-btn--danger:hover {
-  border-color: color-mix(in srgb, var(--neon-red) 50%, transparent);
-  background: color-mix(in srgb, var(--neon-red) 18%, transparent);
-  color: #fecaca;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--neon-red) 12%, transparent);
+  color: #f87171;
 }
 
 .topbar-title--editable {
